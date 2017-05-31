@@ -1255,7 +1255,6 @@ test('staticAnalysisCommon.isBuiltinFunctionCall', function (t) {
   t.notOk(common.isBuiltinFunctionCall(localCall), 'local call is not builtin')
 })
 
-
 test('staticAnalysisCommon.isStorageVariableDeclaration', function (t) {
   t.plan(3)
   var node1 = {

@@ -59,6 +59,12 @@ function Editor (editorElement) {
     e.stop()
   })
 
+  this.displayEmptyReadOnlySession = function () {
+    currentSession = emptySession
+    editor.setSession(emptySession)
+    editor.setReadOnly(true)
+  }
+
   this.setBreakpoint = function (row, css) {
     editor.session.setBreakpoint(row, css)
   }

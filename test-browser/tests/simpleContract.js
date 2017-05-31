@@ -5,7 +5,7 @@ var sauce = require('./sauce')
 
 var sources = {
   'sources': {
-    'Untitled.sol': 'contract test1 {} contract test2 {}'
+    'browser/Untitled.sol': 'contract test1 {} contract test2 {}'
   }
 }
 

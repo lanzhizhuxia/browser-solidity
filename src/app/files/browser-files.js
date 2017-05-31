@@ -6,8 +6,10 @@ function Files (storage) {
   var event = new EventManager()
   this.event = event
   var readonly = {}
+  this.type = 'browser'
 
   this.exists = function (path) {
+    path = this.removePrefix(path)
     // NOTE: ignore the config file
     if (path === '.remix.config') {
       return false
@@ -16,16 +18,22 @@ function Files (storage) {
     return this.isReadOnly(path) || storage.exists(path)
   }
 
-  this.get = function (path) {
+  this.get = function (path, cb) {
+    path = this.removePrefix(path)
     // NOTE: ignore the config file
     if (path === '.remix.config') {
       return null
     }
 
-    return readonly[path] || storage.get(path)
+    var content = readonly[path] || storage.get(path)
+    if (cb) {
+      cb(null, content)
+    }
+    return content
   }
 
   this.set = function (path, content) {
+    path = this.removePrefix(path)
     // NOTE: ignore the config file
     if (path === '.remix.config') {
       return false
@@ -48,6 +56,7 @@ function Files (storage) {
   }
 
   this.addReadOnly = function (path, content) {
+    path = this.removePrefix(path)
     if (!storage.exists(path)) {
       readonly[path] = content
       event.trigger('fileAdded', [path, true])
@@ -58,18 +67,20 @@ function Files (storage) {
   }
 
   this.isReadOnly = function (path) {
+    path = this.removePrefix(path)
     return readonly[path] !== undefined
   }
 
   this.remove = function (path) {
-    if (!this.exists(path)) {
+    var unprefixedpath = this.removePrefix(path)
+    if (!this.exists(unprefixedpath)) {
       return false
     }
 
-    if (this.isReadOnly(path)) {
+    if (this.isReadOnly(unprefixedpath)) {
       readonly[path] = undefined
     } else {
-      if (!storage.remove(path)) {
+      if (!storage.remove(unprefixedpath)) {
         return false
       }
     }
@@ -78,8 +89,10 @@ function Files (storage) {
   }
 
   this.rename = function (oldPath, newPath) {
-    if (!this.isReadOnly(oldPath) && storage.exists(oldPath)) {
-      if (!storage.rename(oldPath, newPath)) {
+    var unprefixedoldPath = this.removePrefix(oldPath)
+    var unprefixednewPath = this.removePrefix(newPath)
+    if (!this.isReadOnly(unprefixedoldPath) && storage.exists(unprefixedoldPath)) {
+      if (!storage.rename(unprefixedoldPath, unprefixednewPath)) {
         return false
       }
       event.trigger('fileRenamed', [oldPath, newPath])
@@ -92,19 +105,23 @@ function Files (storage) {
     var files = {}
 
     // add r/w files to the list
-    storage.keys().forEach(function (path) {
+    storage.keys().forEach((path) => {
       // NOTE: as a temporary measure do not show the config file
       if (path !== '.remix.config') {
-        files[path] = false
+        files[this.type + '/' + path] = false
       }
     })
 
     // add r/o files to the list
-    Object.keys(readonly).forEach(function (path) {
-      files[path] = true
+    Object.keys(readonly).forEach((path) => {
+      files[this.type + '/' + path] = true
     })
 
     return files
+  }
+
+  this.removePrefix = function (path) {
+    return path.indexOf(this.type + '/') === 0 ? path.replace(this.type + '/', '') : path
   }
 
   //
@@ -146,7 +163,6 @@ function Files (storage) {
         '/content': self.get(path)
       })
     })
-
     return tree
   }
 
